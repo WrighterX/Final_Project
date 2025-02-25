@@ -101,14 +101,24 @@ async function fetchUserPosts() {
     if (!token) return (window.location.href = "login.html");
 
     try {
-        const res = await fetch(`${API_URL}/posts`, {
+        const res = await fetch(`${API_URL}/posts/user`, {
             headers: { "Authorization": `Bearer ${token}` }
         });
+
+        if (!res.ok) {
+            throw new Error("Failed to fetch user posts");
+        }
 
         const posts = await res.json();
         console.log("🔹 User posts fetched:", posts);
 
-        document.getElementById("user-posts").innerHTML = posts.map(post => `
+        const container = document.getElementById("user-posts");
+        if (!container) {
+            console.warn("⚠️ user-posts container not found.");
+            return;
+        }
+
+        container.innerHTML = posts.map(post => `
             <div>
                 <h2>${post.title}</h2>
                 <p>${post.content}</p>
@@ -116,7 +126,7 @@ async function fetchUserPosts() {
             </div>
         `).join("");
     } catch (err) {
-        console.error("❌ Error fetching posts:", err);
+        console.error("❌ Error fetching user posts:", err);
     }
 }
 
@@ -160,4 +170,3 @@ async function deletePost(id) {
     });
     fetchUserPosts();
 }
-

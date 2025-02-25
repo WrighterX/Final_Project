@@ -6,7 +6,7 @@
     <title>Dashboard</title>
     <link rel="stylesheet" href="styles.css">
 </head>
-<body>
+<body onload="fetchUserPosts()">
     <h1>Your Dashboard</h1>
     <button onclick="logout()">Logout</button>
     <form id="postForm">
@@ -14,11 +14,11 @@
         <textarea id="content" placeholder="Post Content" required></textarea>
         <button type="submit">Create Post</button>
     </form>
+    <button onclick="window.location.href='index.html'">🏠 Back to Home</button>
     <div id="user-posts"></div>
 
     <script src="script.js"></script>
     <script>
-        fetchUserPosts();
         document.getElementById("postForm").addEventListener("submit", createPost);
     </script>
 </body>
