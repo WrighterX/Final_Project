@@ -2,35 +2,69 @@ const API_URL = "http://localhost:3000";  // Update if deployed
 
 // Fetch all posts (Public)
 async function fetchPosts() {
-    const res = await fetch(`${API_URL}/posts`);
-    const posts = await res.json();
-    document.getElementById("posts-container").innerHTML = posts.map(post => `
-        <div>
-            <h2>${post.title}</h2>
-            <p>${post.content}</p>
-            <small>By: ${post.author.username}</small>
-        </div>
-    `).join("");
+    console.log("🔍 Fetching posts...");
+
+    // Ensure the element exists before continuing
+    const container = document.getElementById("posts-container");
+    if (!container) {
+        console.warn("⚠️ posts-container not found. Skipping fetchPosts().");
+        return;
+    }
+
+    try {
+        const res = await fetch(`${API_URL}/posts`);
+
+        // Check if the response is actually JSON
+        const contentType = res.headers.get("content-type");
+        if (!contentType || !contentType.includes("application/json")) {
+            console.error("❌ Response is not JSON:", await res.text());
+            return;
+        }
+
+        const posts = await res.json(); // Parse JSON
+        console.log("✅ Parsed posts:", posts);
+
+        container.innerHTML = posts.map(post => `
+            <div>
+                <h2>${post.title}</h2>
+                <p>${post.content}</p>
+                <small>By: ${post.author?.username || "Unknown"}</small>
+            </div>
+        `).join(""); // Ensure proper HTML rendering
+
+    } catch (err) {
+        console.error("❌ Error fetching posts:", err);
+        alert("Error loading posts. Check console for details.");
+    }
 }
 
 // Register user
+// Register User
 async function registerUser(event) {
     event.preventDefault();
+
+    const username = document.getElementById("username").value;
     const email = document.getElementById("email").value;
     const password = document.getElementById("password").value;
-    const username = document.getElementById("username").value;
 
-    const res = await fetch(`${API_URL}/auth/register`, {
+    console.log("📤 Sending data:", { username, email, password }); // 🔍 Debugging
+
+    const res = await fetch("http://localhost:3000/auth/register", {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ email, password, username })
+        headers: { 
+            "Content-Type": "application/json"
+        },
+        body: JSON.stringify({ username, email, password }) // ✅ Convert to JSON
     });
 
+    const data = await res.json();
+    console.log("🔹 Register Response:", data);
+
     if (res.ok) {
-        alert("Registration successful! Please login.");
+        alert("Registration successful!");
         window.location.href = "login.html";
     } else {
-        alert("Registration failed.");
+        alert(`Error: ${data.message}`);
     }
 }
 
@@ -66,34 +100,34 @@ async function fetchUserPosts() {
     const token = localStorage.getItem("token");
     if (!token) return (window.location.href = "login.html");
 
-    const res = await fetch(`${API_URL}/posts`, {
-        headers: { "Authorization": `Bearer ${token}` }
-    });
+    try {
+        const res = await fetch(`${API_URL}/posts`, {
+            headers: { "Authorization": `Bearer ${token}` }
+        });
 
-    const posts = await res.json();
-    document.getElementById("user-posts").innerHTML = posts.map(post => `
-        <div>
-            <h2>${post.title}</h2>
-            <p>${post.content}</p>
-            <button onclick="deletePost('${post._id}')">Delete</button>
-        </div>
-    `).join("");
+        const posts = await res.json();
+        console.log("🔹 User posts fetched:", posts);
+
+        document.getElementById("user-posts").innerHTML = posts.map(post => `
+            <div>
+                <h2>${post.title}</h2>
+                <p>${post.content}</p>
+                <button onclick="deletePost('${post._id}')">Delete</button>
+            </div>
+        `).join("");
+    } catch (err) {
+        console.error("❌ Error fetching posts:", err);
+    }
 }
 
 // Create a new post
 async function createPost(event) {
     event.preventDefault();
     const token = localStorage.getItem("token");
-
-    if (!token) {
-        console.error("No token found. Redirecting to login...");
-        return (window.location.href = "login.html");
-    }
+    if (!token) return (window.location.href = "login.html");
 
     const title = document.getElementById("title").value;
     const content = document.getElementById("content").value;
-
-    console.log("Submitting Post:", { title, content });
 
     const res = await fetch(`${API_URL}/posts`, {
         method: "POST",
@@ -104,14 +138,16 @@ async function createPost(event) {
         body: JSON.stringify({ title, content })
     });
 
-    const data = await res.json();
-    console.log("Response:", data);
-
     if (res.ok) {
-        alert("Post created successfully!");
-        fetchUserPosts();
+        document.getElementById("title").value = "";
+        document.getElementById("content").value = "";
+        
+        // Reload the page after post creation
+        window.location.reload();
     } else {
-        alert(`Error: ${data.message}`);
+        const errorData = await res.json();
+        console.error("❌ Error creating post:", errorData);
+        alert(`Error: ${errorData.message}`);
     }
 }
 
@@ -124,3 +160,4 @@ async function deletePost(id) {
     });
     fetchUserPosts();
 }
+

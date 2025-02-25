@@ -17,7 +17,7 @@ exports.validateProfileUpdate = (req, res, next) => {
 exports.validatePost = (req, res, next) => {
   const schema = Joi.object({
     title: Joi.string().min(5).max(100).required(),
-    content: Joi.string().min(10).required(),
+    content: Joi.string().required(),
   });
 
   const { error } = schema.validate(req.body);

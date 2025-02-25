@@ -6,14 +6,14 @@ exports.createPost = async (req, res) => {
     console.log("Request body:", req.body);
     console.log("User making request:", req.user);
 
-    if (!req.user || !req.user.userId) {
+    if (!req.user || !req.user._id) {
       return res.status(401).json({ message: "Unauthorized. User ID is missing." });
     }
 
     const newPost = await Post.create({ 
         title: req.body.title, 
         content: req.body.content, 
-        author: req.user.userId
+        author: req.user._id
     });
 
     console.log("Post created:", newPost);
@@ -26,9 +26,16 @@ exports.createPost = async (req, res) => {
 
 // Get all posts
 exports.getAllPosts = async (req, res) => {
-  const posts = await Post.find().populate("author", "username");
-  res.json(posts);
+  try {
+    const posts = await Post.find().populate("author", "username");
+    console.log("📝 Sending posts:", JSON.stringify(posts, null, 2)); // Log response
+    res.json(posts);
+  } catch (err) {
+    console.error("❌ Error fetching posts:", err);
+    res.status(500).json({ message: "Server error", error: err.message });
+  }
 };
+
 
 // Get a single post by ID
 exports.getPostById = async (req, res) => {
