@@ -1,0 +1,25 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Dashboard</title>
+    <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+    <h1>Your Dashboard</h1>
+    <button onclick="logout()">Logout</button>
+    <form id="postForm">
+        <input type="text" id="title" placeholder="Post Title" required>
+        <textarea id="content" placeholder="Post Content" required></textarea>
+        <button type="submit">Create Post</button>
+    </form>
+    <div id="user-posts"></div>
+
+    <script src="script.js"></script>
+    <script>
+        fetchUserPosts();
+        document.getElementById("postForm").addEventListener("submit", createPost);
+    </script>
+</body>
+</html>
