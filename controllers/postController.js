@@ -51,11 +51,14 @@ const getUserPosts = async (req, res) => {
 };
 
 
-// Get a single post by ID
 const getPostById = async (req, res) => {
-  const post = await Post.findById(req.params.id).populate("author", "username");
-  if (!post) return res.status(404).json({ message: "Post not found" });
-  res.json(post);
+    try {
+        const post = await Post.findById(req.params.id).populate("author", "username");
+        if (!post) return res.status(404).json({ message: "Post not found" });
+        res.json(post);
+    } catch (err) {
+        res.status(500).json({ message: "Server error", error: err.message });
+    }
 };
 
 // Update a post

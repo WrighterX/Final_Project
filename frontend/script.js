@@ -4,37 +4,49 @@ const API_URL = "http://localhost:3000";  // Update if deployed
 async function fetchPosts() {
     console.log("🔍 Fetching posts...");
 
-    // Ensure the element exists before continuing
     const container = document.getElementById("posts-container");
-    if (!container) {
-        console.warn("⚠️ posts-container not found. Skipping fetchPosts().");
-        return;
-    }
+    if (!container) return;
 
     try {
         const res = await fetch(`${API_URL}/posts`);
-
-        // Check if the response is actually JSON
-        const contentType = res.headers.get("content-type");
-        if (!contentType || !contentType.includes("application/json")) {
-            console.error("❌ Response is not JSON:", await res.text());
-            return;
-        }
-
-        const posts = await res.json(); // Parse JSON
-        console.log("✅ Parsed posts:", posts);
+        const posts = await res.json();
 
         container.innerHTML = posts.map(post => `
             <div>
-                <h2>${post.title}</h2>
-                <p>${post.content}</p>
+                <h2><a href="post.html?id=${post._id}">${post.title}</a></h2>
+                <p>${post.content.substring(0, 100)}...</p> 
                 <small>By: ${post.author?.username || "Unknown"}</small>
             </div>
-        `).join(""); // Ensure proper HTML rendering
+        `).join("");
 
     } catch (err) {
         console.error("❌ Error fetching posts:", err);
-        alert("Error loading posts. Check console for details.");
+    }
+}
+
+async function fetchUserPosts() {
+    const token = localStorage.getItem("token");
+    if (!token) return (window.location.href = "login.html");
+
+    try {
+        const res = await fetch(`${API_URL}/posts/user`, {
+            headers: { "Authorization": `Bearer ${token}` }
+        });
+
+        const posts = await res.json();
+        const container = document.getElementById("user-posts");
+        if (!container) return;
+
+        container.innerHTML = posts.map(post => `
+            <div>
+                <h2><a href="post.html?id=${post._id}">${post.title}</a></h2>
+                <p>${post.content.substring(0, 100)}...</p>
+                <button onclick="deletePost('${post._id}')">Delete</button>
+                <button onclick="editPost('${post._id}')">Edit</button>
+            </div>
+        `).join("");
+    } catch (err) {
+        console.error("❌ Error fetching user posts:", err);
     }
 }
 
@@ -92,42 +104,6 @@ async function loginUser(event) {
 function logout() {
     localStorage.removeItem("token");
     window.location.href = "index.html";
-}
-
-// Fetch user posts
-async function fetchUserPosts() {
-    const token = localStorage.getItem("token");
-    if (!token) return (window.location.href = "login.html");
-
-    try {
-        const res = await fetch(`${API_URL}/posts/user`, {
-            headers: { "Authorization": `Bearer ${token}` }
-        });
-
-        if (!res.ok) {
-            throw new Error("Failed to fetch user posts");
-        }
-
-        const posts = await res.json();
-        console.log("🔹 User posts fetched:", posts);
-
-        const container = document.getElementById("user-posts");
-        if (!container) {
-            console.warn("⚠️ user-posts container not found.");
-            return;
-        }
-
-        container.innerHTML = posts.map(post => `
-            <div>
-                <h2>${post.title}</h2>
-                <p>${post.content}</p>
-                <button onclick="deletePost('${post._id}')">Delete</button>
-                <button onclick="editPost('${post._id}')">Edit</button>
-            </div>
-        `).join("");
-    } catch (err) {
-        console.error("❌ Error fetching user posts:", err);
-    }
 }
 
 // Create a new post
@@ -210,6 +186,30 @@ async function editPost(id) {
         fetchUserPosts(); // Refresh user posts
     } else {
         alert("Error updating post.");
+    }
+}
+
+async function fetchPostDetails() {
+    const params = new URLSearchParams(window.location.search);
+    const postId = params.get("id");
+
+    if (!postId) {
+        document.getElementById("post-container").innerHTML = "<p>Post not found.</p>";
+        return;
+    }
+
+    try {
+        const res = await fetch(`${API_URL}/posts/${postId}`);
+        if (!res.ok) throw new Error("Post not found");
+
+        const post = await res.json();
+        document.getElementById("post-title").innerText = post.title;
+        document.getElementById("post-content").innerText = post.content;
+        document.getElementById("post-author").innerText = `By: ${post.author?.username || "Unknown"}`;
+
+    } catch (err) {
+        console.error("❌ Error fetching post:", err);
+        document.getElementById("post-container").innerHTML = "<p>Error loading post.</p>";
     }
 }
 
