@@ -8,6 +8,10 @@
 </head>
 <body onload="fetchUserPosts()">
     <h1>Your Dashboard</h1>
+    <h2>Update Username</h2>
+    <p>Current Username: <span id="current-username">Loading...</span></p>
+    <input type="text" id="new-username" placeholder="Enter new username" />
+    <button onclick="updateUsername(event)">Update Username</button>
     <button onclick="logout()">Logout</button>
     <form id="postForm">
         <input type="text" id="title" placeholder="Post Title" required>
@@ -19,6 +23,7 @@
 
     <script src="script.js"></script>
     <script>
+        document.addEventListener("DOMContentLoaded", fetchUserProfile);
         document.getElementById("postForm").addEventListener("submit", createPost);
     </script>
 </body>

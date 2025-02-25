@@ -212,3 +212,63 @@ async function editPost(id) {
         alert("Error updating post.");
     }
 }
+
+async function updateUsername(event) {
+    event.preventDefault();
+
+    const token = localStorage.getItem("token");
+    if (!token) {
+        alert("You must be logged in to update your username.");
+        return (window.location.href = "login.html");
+    }
+
+    const newUsername = document.getElementById("new-username").value;
+    if (!newUsername) {
+        alert("Please enter a new username.");
+        return;
+    }
+
+    try {
+        const res = await fetch(`${API_URL}/users/profile`, {
+            method: "PUT",
+            headers: {
+                "Content-Type": "application/json",
+                "Authorization": `Bearer ${token}`
+            },
+            body: JSON.stringify({ username: newUsername })
+        });
+
+        const data = await res.json();
+        if (res.ok) {
+            alert("Username updated successfully!");
+            document.getElementById("new-username").value = "";
+            fetchUserProfile(); // Refresh the displayed username
+        } else {
+            alert(`Error: ${data.message}`);
+        }
+    } catch (err) {
+        console.error("❌ Error updating username:", err);
+        alert("Error updating username. Check console for details.");
+    }
+}
+
+// Fetch user profile and display username
+async function fetchUserProfile() {
+    const token = localStorage.getItem("token");
+    if (!token) return;
+
+    try {
+        const res = await fetch(`${API_URL}/users/profile`, {
+            headers: { "Authorization": `Bearer ${token}` }
+        });
+
+        if (!res.ok) throw new Error("Failed to fetch user profile");
+
+        const user = await res.json();
+        console.log("👤 User profile:", user);
+
+        document.getElementById("current-username").innerText = user.username || "Unknown";
+    } catch (err) {
+        console.error("❌ Error fetching user profile:", err);
+    }
+}
