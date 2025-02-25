@@ -38,7 +38,6 @@ async function fetchPosts() {
     }
 }
 
-// Register user
 // Register User
 async function registerUser(event) {
     event.preventDefault();
@@ -123,6 +122,7 @@ async function fetchUserPosts() {
                 <h2>${post.title}</h2>
                 <p>${post.content}</p>
                 <button onclick="deletePost('${post._id}')">Delete</button>
+                <button onclick="editPost('${post._id}')">Edit</button>
             </div>
         `).join("");
     } catch (err) {
@@ -169,4 +169,46 @@ async function deletePost(id) {
         headers: { "Authorization": `Bearer ${token}` }
     });
     fetchUserPosts();
+}
+
+// Edit a post
+async function editPost(id) {
+    const token = localStorage.getItem("token");
+    if (!token) return (window.location.href = "login.html");
+
+    // Fetch existing post details
+    const res = await fetch(`${API_URL}/posts/${id}`, {
+        headers: { "Authorization": `Bearer ${token}` }
+    });
+
+    if (!res.ok) {
+        alert("Failed to fetch post data.");
+        return;
+    }
+
+    const post = await res.json();
+    const newTitle = prompt("Edit title:", post.title);
+    const newContent = prompt("Edit content:", post.content);
+
+    if (!newTitle || !newContent) {
+        alert("Title and content cannot be empty.");
+        return;
+    }
+
+    // Send update request
+    const updateRes = await fetch(`${API_URL}/posts/${id}`, {
+        method: "PUT",
+        headers: {
+            "Content-Type": "application/json",
+            "Authorization": `Bearer ${token}`
+        },
+        body: JSON.stringify({ title: newTitle, content: newContent })
+    });
+
+    if (updateRes.ok) {
+        alert("Post updated successfully!");
+        fetchUserPosts(); // Refresh user posts
+    } else {
+        alert("Error updating post.");
+    }
 }

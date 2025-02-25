@@ -60,19 +60,29 @@ const getPostById = async (req, res) => {
 
 // Update a post
 const updatePost = async (req, res) => {
-  const post = await Post.findById(req.params.id);
-  if (!post || post.author.toString() !== req.user.id) {
-    return res.status(403).json({ message: "Unauthorized" });
-  }
+    try {
+        const post = await Post.findById(req.params.id);
+        if (!post || post.author.toString() !== req.user._id.toString()) {
+            return res.status(403).json({ message: "Unauthorized" });
+        }
 
-  const updatedPost = await Post.findByIdAndUpdate(req.params.id, req.body, { new: true });
-  res.json(updatedPost);
+        // Only update title and content
+        post.title = req.body.title || post.title;
+        post.content = req.body.content || post.content;
+        await post.save();
+
+        res.json(post);
+    } catch (err) {
+        console.error("Error updating post:", err);
+        res.status(500).json({ message: "Server error", error: err.message });
+    }
 };
+
 
 // Delete a post
 const deletePost = async (req, res) => {
   const post = await Post.findById(req.params.id);
-  if (!post || post.author.toString() !== req.user.id) {
+  if (!post || post.author.toString() !== req.user._id) {
     return res.status(403).json({ message: "Unauthorized" });
   }
 
